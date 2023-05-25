@@ -12,37 +12,38 @@ from setuptools import setup, Extension
 from setuptools.extension import Library
 
 __version__ = "0.0.1"
-physfs_lib_name = "physfs-static" if platform.system() == "Windows" else "physfs"
+IS_WINDOWS = platform.system() == "Windows"
+IS_MACOS = platform.system() == "Darwin"
 
 
 ext_libraries = [
    [
-      physfs_lib_name, 
+      "physfs", 
       {
          "sources": ["libs/physfs"],
          "type": "cmake",
          "cmake_args": [
-            # disable build shared library
-            "-DPHYSFS_BUILD_SHARED=false", 
+            # disable build shared library for macos and linux
+            "-DPHYSFS_BUILD_SHARED=false"
+            if not IS_WINDOWS else 
+            # disable build static library for windows(before something wrong in windows)
+            "-DPHYSFS_BUILD_STATIC=false",
             # disable build test
             "-DPHYSFS_BUILD_TEST=false", 
             # disable build docs
             "-DPHYSFS_BUILD_DOCS=false", 
             # set -fPIC
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-         ]
+         ],
+         "copy_objects": [] if not IS_WINDOWS else ["physfs.dll"]
       }
    ]
 ]
 
 
-libraries = []
 extra_link_args = []
-if platform.system() == "Darwin":
+if IS_MACOS:
    extra_link_args = ["-framework", "IOKit", "-framework", "Foundation"]
-elif platform.system() == "Windows":
-   libraries = ["advapi32", "shell32"]
-
 
 
 ext_modules = [
@@ -51,7 +52,6 @@ ext_modules = [
         # Example: passing in the version to the compiled code
         define_macros = [('VERSION_INFO', __version__)],
         include_dirs=["libs/physfs/src"],
-        libraries=libraries,
         extra_link_args=extra_link_args,
     ),
 ]
@@ -68,12 +68,15 @@ class build_clib(_build_clib):
 
          log.info("building '%s' library", lib_name)
          src = Path(build_info["sources"][0]).absolute()
-         build_temp = Path(self.build_temp) / lib_name
+         build_temp = (Path(self.build_temp) / lib_name).absolute()
          build_temp.mkdir(parents=True, exist_ok=True)
-
          config = 'Debug' if self.debug else 'Release'
+         build_dest = build_temp / config if IS_WINDOWS else build_temp
+
+         build_ext = self.get_finalized_command('build_ext')
+         build_lib = Path(build_ext.build_lib).absolute()
          cmake_args = [
-            '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + str(build_temp.absolute()),
+            '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + str(build_temp),
             '-DCMAKE_BUILD_TYPE=' + config,
             *build_info.get("cmake_args", [])
          ]
@@ -85,16 +88,15 @@ class build_clib(_build_clib):
          self.spawn(['cmake', str(src)] + cmake_args)
          if not self.dry_run:
             self.spawn(['cmake', '--build', '.'] + build_args)
-
-         # extend library_dirs
-         build_ext = self.get_finalized_command('build_ext')
-         if platform.system() == "Windows":
+            # extend library_dirs
             for ext in build_ext.extensions:
-               ext.library_dirs.append(str(build_temp / config))
-         else:
-            for ext in build_ext.extensions:
-               ext.library_dirs.append(str(build_temp))
-
+               ext.library_dirs.append(str(build_dest))
+            # copy objects to dest
+            build_lib.mkdir(parents=True, exist_ok=True)
+            copy_objects = build_info.get("copy_objects")
+            if copy_objects:
+               for obj in copy_objects:
+                  self.copy_file(str(build_dest / obj), str(build_lib / obj))
          os.chdir(str(cwd))
       return super().build_libraries(other_libraries)
 
