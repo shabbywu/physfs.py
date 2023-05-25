@@ -35,13 +35,24 @@ ext_libraries = [
    ]
 ]
 
+
+libraries = []
+extra_link_args = []
+if platform.system() == "Darwin":
+   extra_link_args = ["-framework", "IOKit", "-framework", "Foundation"]
+elif platform.system() == "Windows":
+   libraries = ["advapi32", "shell32"]
+
+
+
 ext_modules = [
     Pybind11Extension("physfs",
         ["src/main.cpp", "src/shim.cpp"],
         # Example: passing in the version to the compiled code
         define_macros = [('VERSION_INFO', __version__)],
         include_dirs=["libs/physfs/src"],
-        extra_link_args=["-framework", "IOKit", "-framework", "Foundation"] if platform.system() == "Darwin" else []
+        libraries=libraries,
+        extra_link_args=extra_link_args,
     ),
 ]
 
