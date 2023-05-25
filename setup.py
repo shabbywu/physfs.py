@@ -41,6 +41,7 @@ ext_modules = [
         # Example: passing in the version to the compiled code
         define_macros = [('VERSION_INFO', __version__)],
         include_dirs=["libs/physfs/src"],
+        extra_link_args=["-static"]
     ),
 ]
 
