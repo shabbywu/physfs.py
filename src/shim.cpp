@@ -34,12 +34,12 @@ void physfs_deinit() {
 }
 
 
-void physfs_mount(std::string source, std::string mountPoint = "/") {
+void physfs_mount(std::string source, std::string mountPoint = "/", py::bool_ appendToPath = py::bool_(0)) {
     if (!PHYSFS_isInit()) {
         throw std::runtime_error("PHYSFS is not initialized, please call init() first");
     }
 
-    if (!PHYSFS_mount(source.c_str(), mountPoint.c_str(), 1)) {
+    if (!PHYSFS_mount(source.c_str(), mountPoint.c_str(), appendToPath)) {
         throw std::runtime_error(string_format("Failure. Reason: [%s]", PHYSFS_getLastError()));
     }
 }
@@ -176,7 +176,8 @@ void register_physfs(py::module_ &m) {
     * \param mountPoint Location in the interpolated tree that this archive
     *                   will be "mounted", in platform-independent notation.
     *                   NULL or "" is equivalent to "/".
-    )pbdoc", py::arg("source").none(false), py::arg("mountPoint") = "/");
+    * \param appendToPath nonzero to append to search path, zero to prepend.
+    )pbdoc", py::arg("source").none(false), py::arg("mountPoint") = "/", py::arg("appendToPath") = py::bool_(0));
 
     m.def("unmount", &physfs_unmount, R"pbdoc(
         Remove a directory or archive from the search path.

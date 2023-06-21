@@ -2,7 +2,7 @@ from pathlib import Path
 import physfs
 
 rootdir = Path(__file__).parent
-assert physfs.__version__ == '0.0.1'
+assert physfs.__version__ == '0.0.2'
 
 physfs.init()
 assert physfs.ls("/") == []

@@ -11,7 +11,7 @@ from setuptools.command.build_clib import build_clib as _build_clib
 from setuptools import setup, Extension
 from setuptools.extension import Library
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 IS_WINDOWS = platform.system() == "Windows"
 IS_MACOS = platform.system() == "Darwin"
 
