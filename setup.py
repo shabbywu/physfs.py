@@ -1,104 +1,127 @@
-# Available at setup time due to pyproject.toml
-import platform
 import os
+import re
+import subprocess
+import sys
 from pathlib import Path
-from glob import glob
-from distutils import log
 
 # Available at setup time due to pyproject.toml
-from pybind11.setup_helpers import Pybind11Extension, build_ext
-from setuptools.command.build_clib import build_clib as _build_clib
-from setuptools import setup, Extension
-from setuptools.extension import Library
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 
-__version__ = "0.0.2"
-IS_WINDOWS = platform.system() == "Windows"
-IS_MACOS = platform.system() == "Darwin"
+__version__ = "0.1.0"
 
-
-ext_libraries = [
-   [
-      "physfs", 
-      {
-         "sources": ["libs/physfs"],
-         "type": "cmake",
-         "cmake_args": [
-            # disable build shared library for macos and linux
-            "-DPHYSFS_BUILD_SHARED=false"
-            if not IS_WINDOWS else 
-            # disable build static library for windows(before something wrong in windows)
-            "-DPHYSFS_BUILD_STATIC=false",
-            # disable build test
-            "-DPHYSFS_BUILD_TEST=false", 
-            # disable build docs
-            "-DPHYSFS_BUILD_DOCS=false", 
-            # set -fPIC
-            "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-         ],
-         "copy_objects": [] if not IS_WINDOWS else ["physfs.dll"]
-      }
-   ]
-]
+# Convert distutils Windows platform specifiers to CMake -A arguments
+PLAT_TO_CMAKE = {
+    "win32": "Win32",
+    "win-amd64": "x64",
+    "win-arm32": "ARM",
+    "win-arm64": "ARM64",
+}
 
 
-extra_link_args = []
-if IS_MACOS:
-   extra_link_args = ["-framework", "IOKit", "-framework", "Foundation"]
+# A CMakeExtension needs a sourcedir instead of a file list.
+# The name must be the _single_ output extension from the CMake build.
+# If you need multiple extensions, see scikit-build.
+class CMakeExtension(Extension):
+    def __init__(self, name: str, sourcedir: str = "") -> None:
+        super().__init__(name, sources=[])
+        self.sourcedir = os.fspath(Path(sourcedir).resolve())
 
 
-ext_modules = [
-    Pybind11Extension("physfs",
-        ["src/main.cpp", "src/shim.cpp"],
-        # Example: passing in the version to the compiled code
-        define_macros = [('VERSION_INFO', __version__)],
-        include_dirs=["libs/physfs/src"],
-        extra_link_args=extra_link_args,
-    ),
-]
+class CMakeBuild(build_ext):
+    def build_extension(self, ext: CMakeExtension) -> None:
+        # Must be in this form due to bug in .resolve() only fixed in Python 3.10+
+        ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
+        extdir = ext_fullpath.parent.resolve()
 
+        # Using this requires trailing slash for auto-detection & inclusion of
+        # auxiliary "native" libs
 
-class build_clib(_build_clib):
-   def build_libraries(self, libraries):
-      cwd = Path().absolute()
-      other_libraries = []
-      for (lib_name, build_info) in libraries:
-         if build_info.get("type") != "cmake":
-            libraries.append((lib_name, build_info))
-            continue
+        debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
+        cfg = "Debug" if debug else "Release"
 
-         log.info("building '%s' library", lib_name)
-         src = Path(build_info["sources"][0]).absolute()
-         build_temp = (Path(self.build_temp) / lib_name).absolute()
-         build_temp.mkdir(parents=True, exist_ok=True)
-         config = 'Debug' if self.debug else 'Release'
-         build_dest = build_temp / config if IS_WINDOWS else build_temp
+        # CMake lets you override the generator - we need to check this.
+        # Can be set with Conda-Build, for example.
+        cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
 
-         build_ext = self.get_finalized_command('build_ext')
-         build_lib = Path(build_ext.build_lib).absolute()
-         cmake_args = [
-            '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + str(build_temp),
-            '-DCMAKE_BUILD_TYPE=' + config,
-            *build_info.get("cmake_args", [])
-         ]
-         build_args = [
-            '--config', config,
-            "-v"
-         ]
-         os.chdir(str(build_temp))
-         self.spawn(['cmake', str(src)] + cmake_args)
-         if not self.dry_run:
-            self.spawn(['cmake', '--build', '.'] + build_args)
-            # extend library_dirs
-            for ext in build_ext.extensions:
-               ext.library_dirs.append(str(build_dest))
-            # copy objects to dest
-            build_lib.mkdir(parents=True, exist_ok=True)
-            copy_objects = build_info.get("copy_objects")
-            if copy_objects:
-               for obj in copy_objects:
-                  self.copy_file(str(build_dest / obj), str(build_lib / obj))
-         os.chdir(str(cwd))
-      return super().build_libraries(other_libraries)
+        cmake_args = [
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
+            f"-DPython_EXECUTABLE={sys.executable}",
+            f"-DPython_ROOT_DIR={os.path.dirname(sys.executable)}",
+            f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
+        ]
+        build_args = []
+        # Adding CMake arguments set as environment variable
+        # (needed e.g. to build for ARM OSx on conda-forge)
+        if "CMAKE_ARGS" in os.environ:
+            cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ") if item]
+
+        # In this example, we pass in the version to C++. You might not need to.
+        cmake_args += [f"-DVERSION_INFO={__version__}"]
+
+        if self.compiler.compiler_type != "msvc":
+            # Using Ninja-build since it a) is available as a wheel and b)
+            # multithreads automatically. MSVC would require all variables be
+            # exported for Ninja to pick it up, which is a little tricky to do.
+            # Users can override the generator with CMAKE_GENERATOR in CMake
+            # 3.15+.
+            if not cmake_generator or cmake_generator == "Ninja":
+                try:
+                    import ninja
+
+                    ninja_executable_path = Path(ninja.BIN_DIR) / "ninja"
+                    cmake_args += [
+                        "-GNinja",
+                        f"-DCMAKE_MAKE_PROGRAM:FILEPATH={ninja_executable_path}",
+                    ]
+                except ImportError:
+                    pass
+
+        else:
+            # Single config generators are handled "normally"
+            single_config = any(x in cmake_generator for x in {"NMake", "Ninja"})
+
+            # CMake allows an arch-in-generator style for backward compatibility
+            contains_arch = any(x in cmake_generator for x in {"ARM", "Win64"})
+
+            # Specify the arch if using MSVC generator, but only if it doesn't
+            # contain a backward-compatibility arch spec already in the
+            # generator name.
+            if not single_config and not contains_arch:
+                cmake_args += ["-A", PLAT_TO_CMAKE[self.plat_name]]
+
+            # Multi-config generators have a different way to specify configs
+            if not single_config:
+                cmake_args += [
+                    f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"
+                ]
+                build_args += ["--config", cfg]
+
+        if sys.platform.startswith("darwin"):
+            # Cross-compile support for macOS - respect ARCHFLAGS if set
+            archs = re.findall(r"-arch (\S+)", os.environ.get("ARCHFLAGS", ""))
+            if archs:
+                cmake_args += ["-DCMAKE_OSX_ARCHITECTURES={}".format(";".join(archs))]
+
+        # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
+        # across all generators.
+        if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
+            # self.parallel is a Python 3 only way to set parallel jobs by hand
+            # using -j in the build_ext call, not supported by pip or PyPA-build.
+            if hasattr(self, "parallel") and self.parallel:
+                # CMake 3.12+ only.
+                build_args += [f"-j{self.parallel}"]
+
+        build_temp = Path(self.build_temp) / ext.name
+        if not build_temp.exists():
+            build_temp.mkdir(parents=True)
+
+        subprocess.run(
+            ["cmake", ext.sourcedir, *cmake_args], cwd=build_temp, check=True
+        )
+        subprocess.run(
+            ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True
+        )
 
 
 setup(
@@ -109,12 +132,9 @@ setup(
     url="https://github.com/shabbywu/physfs.py",
     description="PhysFS.py is a python wrapper for the PhysicsFS library.",
     long_description="",
-    ext_modules=ext_modules,
-    libraries=ext_libraries,
+    ext_modules=[CMakeExtension("physfs")],
+    cmdclass={"build_ext": CMakeBuild},
     extras_require={"test": "pytest"},
-    # Currently, build_ext only provides an optional "highest supported C++
-    # level" feature, but in the future it may provide more features.
-    cmdclass={"build_ext": build_ext, "build_clib": build_clib},
     zip_safe=False,
     python_requires=">=3.7",
 )
