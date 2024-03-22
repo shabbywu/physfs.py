@@ -43,9 +43,12 @@ jobs:
       with:
         submodules: 'true'
 
-    - uses: pypa/cibuildwheel@v2.12.3
+    - uses: pypa/cibuildwheel@v2.17
       env:
         CIBW_ARCHS_MACOS: auto universal2
+        # Disable building PyPy wheels on all platforms
+        CIBW_SKIP: pp*
+        MACOSX_DEPLOYMENT_TARGET: 10.14
 
     - name: Verify clean directory
       run: git diff --exit-code

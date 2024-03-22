@@ -10,4 +10,4 @@ target_include_directories(physfs PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../libs/pybind11/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../libs/physfs/src
   )
-target_link_libraries(physfs PUBLIC PhysFS::PhysFS-static)
+target_link_libraries(physfs PUBLIC physfs-static)
