@@ -184,13 +184,7 @@ void register_physfs(py::module_ &m) {
     m.doc() = R"pbdoc(
         physfs - PhysicsFS is a library to provide abstract access to various archives.
         -----------------------
-
         .. currentmodule:: physfs
-
-        .. autosummary::
-           :toctree: _generate
-
-           init
     )pbdoc";
 
     m.def("init", &physfs_init, R"pbdoc(
