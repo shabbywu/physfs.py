@@ -20,6 +20,6 @@ physfs.deinit()
 E = None
 try:
     physfs.ls()
-except RuntimeError as e:
+except physfs.PhysfsUninitialedError as e:
     E = e
 assert E is not None
