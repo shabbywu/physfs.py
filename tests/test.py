@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import physfs
 
 rootdir = Path(__file__).parent
