@@ -132,7 +132,7 @@ setup(
     author_email="shabbywu@qq.com",
     url="https://github.com/shabbywu/physfs.py",
     description="PhysFS.py is a python wrapper for the PhysicsFS library.",
-    long_description="""
+    long_description=r"""
 PhysFS.py
 =========
 
