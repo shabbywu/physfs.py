@@ -29,8 +29,7 @@ PhysFS.py is a python wrapper for the PhysicsFS library.
 Installation
 ------------
 
- - clone this repository
- - `pip install ./physfs.py`
+- `pip install physfs.py`
 
 Requirements
 ------------
@@ -38,7 +37,7 @@ CMake for building, and, of course, the PhysicsFS library.
 
 Features
 ------------
-physfs.py provides an encapsulation of the basic interface of PhysFS, including `init`, `deinit`, `mount`, `unmount`, `ls`, `read(cat)`, `stat`.
+physfs.py provides an encapsulation of the basic interface of PhysFS, including `init`, `deinit`, `mount`, `mount_memory`, `unmount`, `ls`, `read(cat)`, `stat`.
 
 Enables python to use PhysFS at a minimum.
 

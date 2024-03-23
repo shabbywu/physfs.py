@@ -83,9 +83,6 @@ void physfs_mount_memory(py::buffer buf, std::string bufName, std::string mountP
         throw PhysfsUninitialedError();
     }
     auto info = buf.request();
-
-    std::cout << "ptr: " << info.ptr << "totalsize: " << info.itemsize * info.size<< std::endl;
-
     if (!PHYSFS_mountMemory((const void*)info.ptr, (PHYSFS_uint64)info.itemsize * info.size, NULL, bufName.c_str(), mountPoint.c_str(), appendToPath)) {
         throw PhysfsRuntimeError(string_format("Failure. Reason: [%s]", PHYSFS_getLastError()));
     }
