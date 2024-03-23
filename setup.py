@@ -132,81 +132,8 @@ setup(
     author_email="shabbywu@qq.com",
     url="https://github.com/shabbywu/physfs.py",
     description="PhysFS.py is a python wrapper for the PhysicsFS library.",
-    long_description=r"""
-PhysFS.py
-=========
-
-.. figure:: https://img.shields.io/github/stars/shabbywu/physfs.py?style=social
-   :alt: github-stars
-
-   github-stars
-
-+---------------------------------------------------+------------------+
-| CI                                                | status           |
-+===================================================+==================+
-| Linux/macOS Travis                                | |Travis-CI|      |
-+---------------------------------------------------+------------------+
-| MSVC 2019                                         | |AppVeyor|       |
-+---------------------------------------------------+------------------+
-| pip builds                                        | |Pip Actions     |
-|                                                   | Status|          |
-+---------------------------------------------------+------------------+
-| ```cibuil                                         | |Wheels Actions  |
-| dwheel`` <https://cibuildwheel.readthedocs.io>`__ | Status|          |
-+---------------------------------------------------+------------------+
-
-.. raw:: html
-
-   <!-- TODO: get a real badge link for appveyor -->
-
-PhysFS.py is a python wrapper for the PhysicsFS library.
-
-Installation
-------------
-
--  ``pip install physfs.py``
-
-Requirements
-------------
-
-CMake for building, and, of course, the PhysicsFS library.
-
-Features
---------
-
-physfs.py provides an encapsulation of the basic interface of PhysFS,
-including ``init``, ``deinit``, ``mount``, ``mount_memory``,
-``unmount``, ``ls``, ``read(cat)``, ``stat``.
-
-Enables python to use PhysFS at a minimum.
-
-License
--------
-
-pybind11 is provided under a BSD-style license that can be found in the
-LICENSE file. By using, distributing, or contributing to this project,
-you agree to the terms and conditions of this license.
-
-Test call
----------
-
-.. code:: python
-
-   import physfs
-   physfs.init()
-
-   physfs.mount("./example.zip")
-   physfs.ls()
-
-.. |Travis-CI| image:: https://travis-ci.org/shabbywu/physfs.py.svg?branch=master&status=passed
-   :target: https://travis-ci.org/shabbywu/physfs.py
-.. |AppVeyor| image:: https://travis-ci.org/shabbywu/physfs.py.svg?branch=master&status=passed
-   :target: https://ci.appveyor.com/project/shabbywu/physfs.py
-.. |Pip Actions Status| image:: https://github.com/shabbywu/physfs.py/workflows/Pip/badge.svg
-   :target: https://github.com/shabbywu/physfs.py/actions?query=workflow%3A%22Pip
-.. |Wheels Actions Status| image:: https://github.com/shabbywu/physfs.py/workflows/Wheels/badge.svg
-   :target: https://github.com/shabbywu/physfs.py/actions?query=workflow%3AWheels
-    """,
+    long_description=(Path(__file__).parent / "./README.md").read_text(),
+    long_description_content_type="text/markdown",
     ext_modules=[CMakeExtension("physfs")],
     cmdclass={"build_ext": CMakeBuild},
     extras_require={"test": "pytest"},
