@@ -24,5 +24,9 @@ set(PHYSFS_BUILD_DOCS FALSE)
 set(PHYSFS_DISABLE_INSTALL ON)
 
 add_subdirectory(libs/physfs)
+# 指定 PhysFS 编译参数
+target_compile_options(physfs-static PRIVATE -fPIC)
+
+
 add_subdirectory(libs/pybind11)
 add_subdirectory(src)
