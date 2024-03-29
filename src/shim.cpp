@@ -268,6 +268,9 @@ void register_physfs(py::module_ &m) {
     py::class_<PHYSFS_Stat>(m, "PHYSFS_Stat")
     .def_readwrite("filetype", &PHYSFS_Stat::filetype)
     .def_readwrite("filesize", &PHYSFS_Stat::filesize)
+    .def_readwrite("modtime", &PHYSFS_Stat::modtime)
+    .def_readwrite("createtime", &PHYSFS_Stat::createtime)
+    .def_readwrite("accesstime", &PHYSFS_Stat::accesstime)
     ;
 
     py::enum_<PHYSFS_FileType>(m, "PHYSFS_FileType")
