@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 # Available at setup time due to pyproject.toml
+import pybind11
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
@@ -49,6 +50,7 @@ class CMakeBuild(build_ext):
             f"-DPython_EXECUTABLE={sys.executable}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DPython_ROOT_DIR={os.path.dirname(sys.executable)}",
+            f"-Dpybind11_DIR={pybind11.get_cmake_dir()}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
         build_args = []

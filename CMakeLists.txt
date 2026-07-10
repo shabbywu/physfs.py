@@ -29,5 +29,5 @@ target_compile_options(physfs-static PRIVATE -fPIC)
 
 
 set(PYBIND11_FINDPYTHON ON CACHE BOOL "Use CMake's modern FindPython support" FORCE)
-add_subdirectory(libs/pybind11)
+find_package(pybind11 CONFIG REQUIRED)
 add_subdirectory(src)

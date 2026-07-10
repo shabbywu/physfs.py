@@ -26,7 +26,8 @@ Requirements
 ------------
 
 - CPython 3.8 or newer.
-- CMake 3.15 or newer and a C++17 compiler when building from source.
+- CMake 3.15 or newer, pybind11 2.10 or newer, and a C++17 compiler when
+  building from source. pip installs the build dependencies automatically.
 - Prebuilt macOS wheels target Apple Silicon (`arm64`) only; Intel macOS uses the source distribution.
 
 Features
