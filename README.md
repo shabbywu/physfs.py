@@ -3,26 +3,17 @@ PhysFS.py
 
 ![github-stars][stars-badge]
 
-|      CI              | status |
-|----------------------|--------|
-| Linux/macOS Travis   | [![Travis-CI][travis-badge]][travis-link] |
-| MSVC 2019            | [![AppVeyor][appveyor-badge]][appveyor-link] |
-| pip builds           | [![Pip Actions Status][actions-pip-badge]][actions-pip-link] |
-| [`cibuildwheel`][]   | [![Wheels Actions Status][actions-wheels-badge]][actions-wheels-link] |
+| CI | status |
+|----|--------|
+| Source install | [![CI status][actions-ci-badge]][actions-ci-link] |
+| [`cibuildwheel`][] release | [![Release status][actions-release-badge]][actions-release-link] |
 
-[gitter-badge]:            https://badges.gitter.im/pybind/Lobby.svg
 [stars-badge]:             https://img.shields.io/github/stars/shabbywu/physfs.py?style=social
-[actions-badge]:           https://github.com/shabbywu/physfs.py/workflows/Tests/badge.svg
-[actions-pip-link]:        https://github.com/shabbywu/physfs.py/actions?query=workflow%3A%22Pip
-[actions-pip-badge]:       https://github.com/shabbywu/physfs.py/workflows/Pip/badge.svg
-[actions-wheels-link]:     https://github.com/shabbywu/physfs.py/actions?query=workflow%3AWheels
-[actions-wheels-badge]:    https://github.com/shabbywu/physfs.py/workflows/Wheels/badge.svg
-[travis-link]:             https://travis-ci.org/shabbywu/physfs.py
-[travis-badge]:            https://travis-ci.org/shabbywu/physfs.py.svg?branch=master&status=passed
-[appveyor-link]:           https://ci.appveyor.com/project/shabbywu/physfs.py
-<!-- TODO: get a real badge link for appveyor -->
-[appveyor-badge]:          https://travis-ci.org/shabbywu/physfs.py.svg?branch=master&status=passed
-[`cibuildwheel`]:          https://cibuildwheel.readthedocs.io
+[actions-ci-link]:         https://github.com/shabbywu/physfs.py/actions/workflows/ci.yml
+[actions-ci-badge]:        https://github.com/shabbywu/physfs.py/actions/workflows/ci.yml/badge.svg?branch=master
+[actions-release-link]:    https://github.com/shabbywu/physfs.py/actions/workflows/release.yml
+[actions-release-badge]:   https://github.com/shabbywu/physfs.py/actions/workflows/release.yml/badge.svg
+[`cibuildwheel`]:          https://cibuildwheel.pypa.io
 
 PhysFS.py is a python wrapper for the PhysicsFS library.
 
@@ -33,7 +24,10 @@ Installation
 
 Requirements
 ------------
-CMake for building, and, of course, the PhysicsFS library.
+
+- CPython 3.8 or newer.
+- CMake 3.15 or newer and a C++17 compiler when building from source.
+- Prebuilt macOS wheels target Apple Silicon (`arm64`) only; Intel macOS uses the source distribution.
 
 Features
 ------------

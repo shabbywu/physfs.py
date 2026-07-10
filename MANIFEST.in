@@ -1,0 +1,14 @@
+include CMakeLists.txt
+
+graft src
+
+include libs/physfs/CMakeLists.txt
+include libs/physfs/LICENSE.txt
+graft libs/physfs/src
+
+include libs/pybind11/CMakeLists.txt
+include libs/pybind11/LICENSE
+graft libs/pybind11/include
+graft libs/pybind11/tools
+
+graft tests
